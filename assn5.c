@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_PROCS (100)
 #define TIME_Q (100)
@@ -42,6 +43,46 @@ void FCFS(int *arr, int *burst, int count) {
     //calculate stats
     printf("Avg Resp: %.2f  Avg TA: %.2f  Avg Wait: %.2f\n\n", (float) resp / count, (float) ta / count,
            (float) wait / count);
+}
+
+void SJF(int *arr, int *burst, int count) {
+    int ready[MAX_PROCS], start[MAX_PROCS], end[MAX_PROCS];
+    int clock = 0;
+    int ta = 0, wait = 0, resp = 0;
+    int cur = 0, next = 0, insert = 0, inQ = 0;
+
+    for (int i = 0; i < count; ++i) {
+        if (cur == insert) {
+            ready[insert++] = next;
+            clock = arr[next];
+            ++inQ;
+            ++next;
+        }
+        start[ready[cur]] = clock;
+        clock += burst[ready[cur]];
+        end[ready[cur]] = clock;
+        inQ;
+        ta += end[ready[cur]] - arr[ready[cur]];
+        wait += start[ready[cur]] - arr[ready[cur]];
+        resp += start[ready[cur]] - arr[ready[cur]];
+        while (next < count && arr[next] < clock){
+            ready[insert++] = next++;
+            ++inQ;
+            for(int i = cur + 1; i < inQ + 1; ++i) {
+                for (int j = i + 1; j < inQ; ++j){
+                    if(burst[ready[i]] > burst[ready[j]]) {
+                        int temp = ready[i];
+                        ready[i] = ready[j];
+                        ready[j] = temp;
+                    }
+                }
+            }
+        }
+        ++cur;
+    }
+    printf("Shortest Job First\n");
+
+    printf("Avg Resp: %.2f  Avg TA: %.2f  Avg Wait: %.2f\n\n", (float) resp / count, (float) ta / count, (float) wait / count);
 }
 
 void RoundRobin(int *arr, int *burst, int count) {
@@ -129,6 +170,7 @@ int main(int argc, char *argv[]) {
     }
 
     FCFS(arr, burst, count);
+    SJF(arr, burst, count);
     RoundRobin(arr, burst, count);
 
     return 0;
