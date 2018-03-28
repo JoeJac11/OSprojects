@@ -85,6 +85,60 @@ void SJF(int *arr, int *burst, int count) {
     printf("Avg Resp: %.2f  Avg TA: %.2f  Avg Wait: %.2f\n\n", (float) resp / count, (float) ta / count, (float) wait / count);
 }
 
+void SRTF(int *arr, int *burst, int count) {
+    int ready[MAX_PROCS], start[MAX_PROCS], end[MAX_PROCS], remain[MAX_PROCS];
+    int clock = 0;
+    int ta = 0, wait = 0, resp = 0;
+    int next = 0, cur = 0, insert = 0, inQ;
+    
+    for (int i = 0; i < count; ++i) {
+        if (cur == insert) {
+            ready[insert++] = next;
+            remain[next] = burst[next];
+            clock = arr[next];
+            start[next] = -1;
+            ++inQ;
+            ++next;
+        }
+
+        if (start[ready[cur]] < 0) {start[ready[cur]] = clock;}
+
+        if (clock + remain[cur] < arr[next]){
+            end[cur] = clock + remain[cur];
+            start[next] = -1;
+            ++inQ;
+            remain[next] = burst[next];
+            clock = arr[next];
+        }
+        else {
+            remain[cur] -= arr[next] - clock;
+            clock = arr[next];
+
+            ready[insert++] = cur;
+            for(int i = cur; i < inQ + 1; ++i) {
+                for (int j = i + 1; j < inQ; ++j){
+                    if(remain[ready[i]] > remain[ready[j]]) {
+                        int temp = ready[i];
+                        ready[i] = ready[j];
+                        ready[j] = temp;
+                    }
+                }
+            }
+        }
+        ++cur;
+    } 
+
+    for(int i = 0; i < count; ++i){
+        int curTa = end[i] - arr[i];
+        ta += curTa;
+        wait += curTa - burst[i];
+        resp += start[i] - arr[i];
+    }
+
+    printf("Shortest Remaining Time First\n");
+    printf("Avg Resp: %.2f  Avg TA: %.2f  Avg Wait: %.2f\n\n", (float) resp / count, (float) ta / count, (float) wait / count);
+}
+
 void RoundRobin(int *arr, int *burst, int count) {
 
     int ready[MAX_PROCS], remain[MAX_PROCS], start[MAX_PROCS], end[MAX_PROCS];
@@ -171,6 +225,7 @@ int main(int argc, char *argv[]) {
 
     FCFS(arr, burst, count);
     SJF(arr, burst, count);
+    SRTF(arr, burst, count);
     RoundRobin(arr, burst, count);
 
     return 0;
