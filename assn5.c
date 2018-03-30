@@ -98,6 +98,15 @@ void SRTF(int *arr, int *burst, int count) {
             clock = arr[next];
             start[next] = -1;
             ++inQ;
+            for(int i = cur; i < inQ; ++i) {
+                for (int j = i + 1; j < inQ; ++j){
+                    if(remain[ready[i]] > remain[ready[j]]) {
+                        int temp = ready[i];
+                        ready[i] = ready[j];
+                        ready[j] = temp;
+                    }
+                }
+            }
         }
 
         if (start[ready[cur]] < 0) {start[ready[cur]] = clock;}
