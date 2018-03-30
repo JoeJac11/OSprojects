@@ -98,12 +98,12 @@ void SRTF(int *arr, int *burst, int count) {
             clock = arr[next];
             start[next] = -1;
             ++inQ;
-            ++next;
         }
 
         if (start[ready[cur]] < 0) {start[ready[cur]] = clock;}
 
-        if (clock + remain[cur] < arr[next]){
+        if (clock + remain[cur] <= arr[next]){
+			printf("here\n");
             end[cur] = clock + remain[cur];
             start[next] = -1;
             ++inQ;
@@ -115,7 +115,7 @@ void SRTF(int *arr, int *burst, int count) {
             clock = arr[next];
 
             ready[insert++] = cur;
-            for(int i = cur; i < inQ + 1; ++i) {
+            for(int i = cur; i < inQ; ++i) {
                 for (int j = i + 1; j < inQ; ++j){
                     if(remain[ready[i]] > remain[ready[j]]) {
                         int temp = ready[i];
@@ -125,6 +125,7 @@ void SRTF(int *arr, int *burst, int count) {
                 }
             }
         }
+		++next;
         ++cur;
     } 
 
