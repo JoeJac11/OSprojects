@@ -92,13 +92,13 @@ void SRTF(int *arr, int *burst, int count) {
     int next = 1, cur = 0, insert = 0;
     
     for (int i = 0; i < count; ++i)  {
-        if (cur == 0) {
+        if (cur == 0) {//first run
             ready[insert++] = cur;
             remain[cur] = burst[cur];
             clock = arr[cur];
             start[cur] = -1;
         }
-        else if (cur == insert){
+        else if (cur == insert){//ready queue is empty
             ready[insert++] = next;
             remain[next] = burst[next];
             clock = arr[next];
@@ -120,20 +120,30 @@ void SRTF(int *arr, int *burst, int count) {
         }
         else {//has time left
             remain[ready[cur]] -= arr[next] - clock;
-            clock = arr[next];
             ready[insert++] = next;
             remain[next] = burst[next];
-            ready[insert++] = cur;
+            start[next] = -1;
+            clock = arr[next];
+            ready[insert++] = ready[cur];
         }
 
-        if (remain[ready[cur]] == 0) {
+        if (remain[ready[cur]] == 0) {//job terminated
             ++cur;
             ++next;
+            for(int i = cur; i < insert; ++i) {//sort ready queue
+                for (int j = i + 1; j < insert; ++j){
+                    if(remain[ready[i]] > remain[ready[j]]) {
+                        int temp = ready[i];
+                        ready[i] = ready[j];
+                        ready[j] = temp;
+                    }
+                }
+            }
         }
         else{
             for(int i = cur; i < insert; ++i) {//sort ready queue
                 for (int j = i + 1; j < insert; ++j){
-                    if(remain[ready[i]] < remain[ready[j]]) {
+                    if(remain[ready[i]] > remain[ready[j]]) {
                         int temp = ready[i];
                         ready[i] = ready[j];
                         ready[j] = temp;
