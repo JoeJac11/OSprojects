@@ -66,30 +66,39 @@ void SRTF(int *arr, int *burst, int count) {
  
     while (finished < count)  {
         if (cur == insert) {//empty queue
-            ready[insert++] = next;
+            ready[insert] = next;
             clock = arr[next];
+            insert = (insert + 1) % MAX_PROCS;
             ++next;
         }
 
         if (start[ready[cur]] < 0) start[ready[cur]] = clock;
 
+        if (remain[ready[cur]] == 0) {
+            cur = (cur + 1) % MAX_PROCS;
+            continue;
+        }
+
         if (clock + remain[ready[cur]] < arr[next]){//job is done
             clock += remain[ready[cur]];
+            remain[ready[cur]] = 0;
             end[ready[cur]] = clock;
             ++finished;
-            ++cur; //remove from queue
+            cur = (cur + 1) % MAX_PROCS; //remove from queue
         }
         else {//has time left
             remain[ready[cur]] -= arr[next] - clock;
-            ready[insert++] = next;
+            ready[insert] = next;
+            insert = (insert + 1) % MAX_PROCS;
             clock = arr[next];
             ++next; //add a new job to the queue
-            ready[insert++] = ready[cur];
-            ++cur;
+            ready[insert] = ready[cur];
+            insert = (insert + 1) % MAX_PROCS;
+            cur = (cur + 1) % MAX_PROCS;
         }
-
-        for(int i = cur; i < insert; ++i) {//sort ready queue
-            for (int j = i + 1; j < insert; ++j){
+        
+        for(int i = cur; i != insert; ++i) {//sort ready queue
+            for (int j = i + 1; j != insert; ++j){
                 if(remain[ready[i]] > remain[ready[j]]) {
                     int temp = ready[i];
                     ready[i] = ready[j];
