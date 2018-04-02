@@ -54,68 +54,73 @@ void SJF(int *arr, int *burst, int count) {
 }
 
 void SRTF(int *arr, int *burst, int count) {
-    int ready[MAX_PROCS], start[MAX_PROCS], end[MAX_PROCS], remain[MAX_PROCS];
+    int ready[MAX_PROCS], remain[MAX_PROCS], start[MAX_PROCS], end[MAX_PROCS];
     int clock = 0;
-    int ta = 0, wait = 0, resp = 0;
-    int next = 0, cur = 0, insert = 0, finished = 0;
-   
-    for (int i = 0; i < count; ++i){
-        start[i] = -1;
-        remain[i] = burst[i];
+    int ta = 0, wait = 0, resp = 0;  //turnaround, wait and response time
+    int next = 0, curr = 0, insert = 0, inQ = 0;
+    for (int i = 0; i < 100; ++i) {
+        remain[i] = 0;
     }
- 
-    while (finished < count)  {
-        if (cur == insert) {//empty queue
-            ready[insert] = next;
-            clock = arr[next];
-            insert = (insert + 1) % MAX_PROCS;
-            ++next;
-        }
 
-        if (start[ready[cur]] < 0) start[ready[cur]] = clock;
+    for (int i = 0; i < 100; ++i) { //still within arrays & not full
+        if (insert <= count) {
+            /*fill empty ready queue*/
+            if (curr == insert) { //no jobs in ready queue, need to put one in
+                ready[insert] = next;  //ready contains pointer to which job
+                remain[next] = burst[next];
+                clock = arr[next];
+                start[next] = -1;
+                next++;
+                insert++;
+                inQ++;
+            }
+            //run the next job in the RQ
+            if (start[ready[curr]] < 0) { start[ready[curr]] = clock; }
 
-        if (remain[ready[cur]] == 0) {
-            cur = (cur + 1) % MAX_PROCS;
-            continue;
-        }
+            /*if it will have time left*/
+            if (clock + remain[ready[curr]] > arr[next] && next < count) { //if something arrives while it's running
+                remain[ready[curr]] -= arr[next] - clock;//calculate new remaining time
+                clock = arr[next]; //move clock to next job arrival
+            } else { /*if it is done*/
+                clock += remain[ready[curr]]; //move clock to when it is done
+                remain[ready[curr]] -= remain[ready[curr]];  //subtract remaining time
+                end[ready[curr]] = clock; //record end time
+                wait += end[ready[curr]] - burst[ready[curr]] - arr[ready[curr]];
+                ta += end[ready[curr]] - arr[ready[curr]];
+                resp += start[ready[curr]] - arr[ready[curr]];
+                --inQ;
+            }
 
-        if (clock + remain[ready[cur]] < arr[next]){//job is done
-            clock += remain[ready[cur]];
-            remain[ready[cur]] = 0;
-            end[ready[cur]] = clock;
-            ++finished;
-            cur = (cur + 1) % MAX_PROCS; //remove from queue
-        }
-        else {//has time left
-            remain[ready[cur]] -= arr[next] - clock;
-            ready[insert] = next;
-            insert = (insert + 1) % MAX_PROCS;
-            clock = arr[next];
-            ++next; //add a new job to the queue
-            ready[insert] = ready[cur];
-            insert = (insert + 1) % MAX_PROCS;
-            cur = (cur + 1) % MAX_PROCS;
-        }
-        
-        for(int i = cur; i != insert; ++i) {//sort ready queue
-            for (int j = i + 1; j != insert; ++j){
-                if(remain[ready[i]] > remain[ready[j]]) {
-                    int temp = ready[i];
-                    ready[i] = ready[j];
-                    ready[j] = temp;
+            /*move arrived bursts to ready queue*/
+            while (next < count && arr[next] <= clock) { //while more have arrived
+                ready[insert] = next;
+                remain[next] = burst[next];
+                start[next] = -1;
+                next++;
+                insert++;
+                inQ++;
+            }
+
+            // find next shortest job
+            int min = 0;
+            for (int i = 0; i < insert; ++i) {
+                if (remain[i] != 0) {
+                    if (min == 0) {
+                        min = i;
+                    } else if (remain[i] < remain[min]) {
+                        min = i;
+                    }
+                }
+                curr = min;
+                if (inQ == 0) {
+                    curr = insert;
                 }
             }
         }
     }
-        
- 
-    for(int i = 0; i < count; ++i){
-        int curTa = end[i] - arr[i];
-        ta += curTa;
-        wait += curTa - burst[i];
-        resp += start[i] - arr[i];
-    }
+    printf("Shortest Time Remaining First: \n");
 
-    printf("Shortest Remaining Time First\n");
-    printf("Avg Resp: %.2f  Avg TA: %.2f  Avg Wait: %.2f\n\n", (float) resp / count, (float) ta / count, (float) wait / count);
+    //calculate stats
+    printf("Avg Resp: %.2f  Avg TA: %.2f  Avg Wait: %.2f\n\n", (float) resp / count, (float) ta / count,
+           (float) wait / count);
 }
